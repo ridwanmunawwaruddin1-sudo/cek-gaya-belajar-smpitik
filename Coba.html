@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cek Gaya Belajar (VAK)</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 820px; margin: 24px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .result { background: #f7fbff; border: 1px solid #d6ecff; }
+    button { padding: 10px 14px; border-radius: 10px; border: 0; cursor: pointer; }
+    .primary { background: #2563eb; color: white; }
+    .muted { background: #eee; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #eee; display: inline-block; margin: 6px 8px 0 0; }
+    #resultBox { display:none; }
+    .hint { color: #555; margin-top: -6px; }
+  </style>
+</head>
+<body>
+
+<h2>Form Cek Gaya Belajar (Visual – Auditori – Kinestetik)</h2>
+<p class="hint">Pilih jawaban yang paling sesuai. Hasil akan muncul setelah klik <b>Submit</b>.</p>
+
+<form id="quiz">
+
+  <!-- Format value: "V:2" / "A:2" / "K:2" -->
+  <div class="card">
+    <b>1) Saya lebih mudah memahami materi jika…</b><br>
+    <label><input type="radio" name="q1" value="V:2" required> Melihat gambar/diagram</label><br>
+    <label><input type="radio" name="q1" value="A:2"> Mendengarkan penjelasan</label><br>
+    <label><input type="radio" name="q1" value="K:2"> Praktik langsung / mencoba</label>
+  </div>
+
+  <div class="card">
+    <b>2) Saat mengingat sesuatu, saya cenderung…</b><br>
+    <label><input type="radio" name="q2" value="V:2" required> Mengingat bentuk/warna</label><br>
+    <label><input type="radio" name="q2" value="A:2"> Mengingat suara/kata-kata</label><br>
+    <label><input type="radio" name="q2" value="K:2"> Mengingat pengalaman/gerakan</label>
+  </div>
+
+  <div class="card">
+    <b>3) Ketika belajar hal baru, saya biasanya…</b><br>
+    <label><input type="radio" name="q3" value="V:2" required> Membaca, menandai, membuat catatan visual</label><br>
+    <label><input type="radio" name="q3" value="A:2"> Bertanya, diskusi, atau mendengar penjelasan</label><br>
+    <label><input type="radio" name="q3" value="K:2"> Mencoba sendiri, latihan, simulasi</label>
+  </div>
+
+  <div class="card">
+    <b>4) Saya lebih suka instruksi yang…</b><br>
+    <label><input type="radio" name="q4" value="V:2" required> Ada contoh gambar / langkah tertulis</label><br>
+    <label><input type="radio" name="q4" value="A:2"> Dijelaskan lisan</label><br>
+    <label><input type="radio" name="q4" value="K:2"> Ditunjukkan sambil praktik</label>
+  </div>
+
+  <button class="primary" type="submit">Submit</button>
+  <button class="muted" type="button" id="resetBtn">Reset</button>
+</form>
+
+<div class="card result" id="resultBox">
+  <h3>Hasil</h3>
+  <p>
+    <span class="pill">Visual: <b id="vScore">0</b></span>
+    <span class="pill">Auditori: <b id="aScore">0</b></span>
+    <span class="pill">Kinestetik: <b id="kScore">0</b></span>
+  </p>
+
+  <p>Gaya belajar dominan: <b id="dominant">-</b></p>
+  <p id="interpretation" style="margin:0;"></p>
+
+  <h4 style="margin-bottom:6px;">Rekomendasi</h4>
+  <ul id="recommendations" style="margin-top:0;"></ul>
+</div>
+
+<script>
+  const form = document.getElementById("quiz");
+  const resultBox = document.getElementById("resultBox");
+  const vScoreEl = document.getElementById("vScore");
+  const aScoreEl = document.getElementById("aScore");
+  const kScoreEl = document.getElementById("kScore");
+  const dominantEl = document.getElementById("dominant");
+  const interpretationEl = document.getElementById("interpretation");
+  const recEl = document.getElementById("recommendations");
+  const resetBtn = document.getElementById("resetBtn");
+
+  function computeScores() {
+    let V = 0, A = 0, K = 0;
+    const chosen = form.querySelectorAll('input[type="radio"]:checked');
+
+    chosen.forEach(inp => {
+      const [cat, pts] = inp.value.split(":");
+      const p = parseInt(pts, 10) || 0;
+      if (cat === "V") V += p;
+      if (cat === "A") A += p;
+      if (cat === "K") K += p;
+    });
+
+    return { V, A, K };
+  }
+
+  function renderResult({V, A, K}) {
+    vScoreEl.textContent = V;
+    aScoreEl.textContent = A;
+    kScoreEl.textContent = K;
+
+    const max = Math.max(V, A, K);
+    const top = [];
+    if (V === max) top.push("Visual");
+    if (A === max) top.push("Auditori");
+    if (K === max) top.push("Kinestetik");
+
+    dominantEl.textContent = top.join(" / ");
+
+    const desc = {
+      "Visual": "Kamu cenderung menyerap informasi lewat tampilan: gambar, teks, diagram, warna, dan struktur visual.",
+      "Auditori": "Kamu cenderung menyerap informasi lewat suara: diskusi, penjelasan lisan, dan mengulang dengan berbicara.",
+      "Kinestetik": "Kamu cenderung menyerap informasi lewat aktivitas: praktik, simulasi, eksperimen, dan gerakan."
+    };
+
+    const rec = {
+      "Visual": [
+        "Gunakan mind map, diagram alur, tabel, dan warna.",
+        "Buat ringkasan 1 halaman (bullet points + highlight).",
+        "Tonton video penjelasan yang banyak visual/ilustrasi."
+      ],
+      "Auditori": [
+        "Belajar lewat diskusi, tanya jawab, atau mengajar orang lain.",
+        "Rekam penjelasan (voice note) lalu dengarkan ulang.",
+        "Baca materi dengan suara pelan untuk memperkuat ingatan."
+      ],
+      "Kinestetik": [
+        "Perbanyak latihan soal, proyek kecil, dan praktik langsung.",
+        "Belajar dengan simulasi/roleplay atau contoh kasus nyata.",
+        "Gunakan teknik belajar singkat sambil bergerak (pomodoro + aktivitas)."
+      ]
+    };
+
+    // Interpretasi: kalau seri, gabungkan deskripsi singkat
+    interpretationEl.textContent = top.map(t => desc[t]).join(" ");
+
+    // Rekomendasi: gabungkan semua rekomendasi kategori top (kalau seri)
+    recEl.innerHTML = "";
+    const merged = top.flatMap(t => rec[t]);
+    merged.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      recEl.appendChild(li);
+    });
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const scores = computeScores();
+    renderResult(scores);
+    resultBox.style.display = "block";
+    resultBox.scrollIntoView({ behavior: "smooth" });
+  });
+
+  resetBtn.addEventListener("click", () => {
+    form.reset();
+    resultBox.style.display = "none";
+  });
+</script>
+
+</body>
+</html>
